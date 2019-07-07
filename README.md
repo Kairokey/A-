@@ -13,7 +13,7 @@ Visualising Path:
 
 > snake_astar.py
 
-![Snake A* 2](https://raw.githubusercontent.com/yashagldit/Snake-Game-Python/master/screenshots/snake_astar2.png)
+![Snake A* 2](https://github.com/yashagldit/Snake-Game-Python/blob/master/screenshots/snake_astar2.png)
 
 > snake_astar2.py
 
