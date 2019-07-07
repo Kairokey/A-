@@ -9,7 +9,7 @@
 
 Visualising Path:
 
-![Snake A*](https://raw.githubusercontent.com/yashagldit/Snake-Game-Python/master/screenshots/snake_astar.png)
+![Snake A*](https://github.com/yashagldit/Snake-Game-Python/blob/master/screenshots/snake_astar.png)
 
 > snake_astar.py
 
