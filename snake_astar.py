@@ -1,21 +1,21 @@
 import pygame
-
 import random
 import numpy as np
 
 pygame.init()
+pygame.display.set_caption('Snake Project With A*')
 
 sx = 600
 sy = 600
-screen = pygame.display.set_mode((sx, sy), pygame.RESIZABLE)
-
+screen = pygame.display.set_mode((sx, sy))
 done = False
 x = 0
 y = 0
 ev = 'r'
 fl = 0
 clock = pygame.time.Clock()
-color = (0, 128, 255)
+color = (230, 46, 0)
+
 sp = {0: (x, y)}
 size = 1
 points = 0
@@ -41,18 +41,8 @@ class Node():
         return self.position == other.position
 
 
-def return_path(current_node):
-    path = []
-    current = current_node
-    while current is not None:
-        path.append(current.position)
-        current = current.parent
-    return path[::-1]  # Return reversed path
-
-
 def astar(maze, start, end):
     """Returns a list of tuples as a path from the given start to the given end in the given maze"""
-    star = start
     # Create start and end node
     start_node = Node(None, start)
     start_node.g = start_node.h = start_node.f = 0
@@ -68,49 +58,44 @@ def astar(maze, start, end):
 
     # Loop until you find the end
     cou = 0
-    outer_iterations = 0
-    max_iterations = (len(maze) // 2) ** 2
-
-    # what squares do we search
-    adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0),)
-    # if allow_diagonal_movement:
-    #     adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1),)
 
     while len(open_list) > 0:
         pygame.event.get()
         cou += 1
-        # print(cou)
+        if cou > 1000:
+            return -1
+        # Get the current node
+        current_node = open_list[0]
+        current_index = 0
         r1 = random.randrange(255)
         g1 = random.randrange(255)
         b1 = random.randrange(255)
         color = (r1, g1, b1)
-        if (cou > 500):
-            return -1
-
-        outer_iterations += 1
-
-        # Get the current node
-        current_node = open_list[0]
-        current_index = 0
         for index, item in enumerate(open_list):
             if item.f < current_node.f:
                 current_node = item
                 current_index = index
 
-            # Pop current off open list, add to closed list
+        # Pop current off open list, add to closed list
         open_list.pop(current_index)
         closed_list.append(current_node)
 
         # Found the goal
         if current_node == end_node:
-            return return_path(current_node)
+            path = []
+            current = current_node
+            while current is not None:
+                path.append(current.position)
+                current = current.parent
+            return path[::-1]  # Return reversed path
 
         # Generate children
         children = []
 
-        for new_position in adjacent_squares:  # Adjacent squares
+        for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]:  # Adjacent squares
 
             # Get node position
+
             node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
             a1, b1 = node_position
             # Remove below comment to visualise the Path
@@ -134,34 +119,32 @@ def astar(maze, start, end):
 
         # Loop through children
         for child in children:
-
             # Child is on the closed list
-            if len([closed_child for closed_child in closed_list if closed_child == child]) > 0:
-                continue
+            for closed_child in closed_list:
+                if child == closed_child:
+                    break
+            else:
+                # Create the f, g, and h values
+                child.g = current_node.g + 1
+                # H: Manhattan distance to end point
+                child.h = abs(child.position[0] - end_node.position[0]) + abs(child.position[1] - end_node.position[1])
+                child.f = child.g + child.h
+                # Child is already in the open list
+                for open_node in open_list:
+                    # check if the new path to children is worst or equal
+                    # than one already in the open_list (by measuring g)
+                    if child == open_node and child.g >= open_node.g:
+                        break
+                else:
+                    # Add the child to the open list
+                    open_list.append(child)
 
-            # Create the f, g, and h values
-            child.g = current_node.g + 1
-            child.h = ((child.position[0] - end_node.position[0]) ** 2) + (
-                    (child.position[1] - end_node.position[1]) ** 2)
-            child.f = child.g + child.h
-
-            # Child is already in the open list
-            if len([open_node for open_node in open_list if child == open_node and child.g > open_node.g]) > 0:
-                continue
-
-            # Add the child to the open list
-            open_list.append(child)
-
-
-def newScore(sc):
-    f = open("score.txt", "w")
-    f.write(sc)
-    f.close()
-
+# -----------------------------------------------------GAME & SNAKE BODY-------------------------------------------------------
 
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 15)
 
+# border of snake body
 
 def drawbox(x, y, col=color):
     pygame.draw.rect(screen, col, pygame.Rect(x, y, 20, 20))
@@ -172,9 +155,8 @@ def randomSnack():
     rx1 = random.randrange((sx - 20) / 20)
     ry1 = random.randrange((sy - 20) / 20)
     rx2, ry2 = rx1 * 20, ry1 * 20
-    lis = sp.values()
-    for i in lis:
-        a, b = i
+    for i in range(0, size):
+        a, b = sp[i]
         if a == rx2 and b == ry2:
             return randomSnack()
 
@@ -184,7 +166,6 @@ def randomSnack():
 rx, ry = randomSnack()
 
 
-# Generate Matrix of current state to pass in A* Algorithm
 def genMatrix(sp):
     mat = np.zeros(shape=(2 + sx // 20, 2 + sy // 20))
     for i in range(0, 2 + sx // 20):
@@ -192,6 +173,7 @@ def genMatrix(sp):
         mat[i, 0] = 1
         mat[1 + sx // 20, i] = 1
         mat[i, 1 + sx // 20] = 1
+
     for i in sp:
         a, b = sp[i]
         mat[1 + a // 20, 1 + b // 20] = 1
@@ -204,10 +186,11 @@ def genMatrix(sp):
     return path
 
 
-screen.fill((0, 0, 0))
-con = 0
-pygame.mixer.music.load('sound/disfigure_blank.mp3')
-pygame.mixer.music.play(-1)
+screen.fill((179, 217, 255))
+#con = 0
+#pygame.mixer.music.load('sound/disfigure_blank.mp3')
+#pygame.mixer.music.play(-1)
+
 while not done:
     fl = 0
     if max_sc < points:
@@ -217,6 +200,7 @@ while not done:
     textsurface2 = myfont.render("Max Score : " + str(max_sc), False, (255, 255, 0))
     screen.blit(textsurface, (sx - 160, 30))
     screen.blit(textsurface2, (sx - 160, 10))
+    # pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(rx, ry, 20, 20))
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             if event.type == pygame.QUIT:
@@ -239,14 +223,11 @@ while not done:
             size = 1
             points = 0
             x, y = 0, 0
-            sp = {}
-            sp[0] = (x, y)
-
-            ev = 'r'
-            pygame.mixer.Channel(2).play(pygame.mixer.Sound('sound/lose.wav'))
-
+            sp = {0: (x, y)}
+            #pygame.mixer.Channel(2).play(pygame.mixer.Sound('sound/lose.wav'))
         continue
     con = 0
+
     if path is None:
         if points > max_score:
             newScore(str(points))
@@ -254,16 +235,16 @@ while not done:
         points = 0
         x, y = 0, 0
         sp = {0: (x, y)}
-        pygame.mixer.Channel(2).play(pygame.mixer.Sound('sound/lose.wav'))
+        #pygame.mixer.Channel(2).play(pygame.mixer.Sound('sound/lose.wav'))
         continue
     for j in path:
         fl = 0
-        screen.fill((0, 0, 0))
+        screen.fill((255, 255, 255))
         if max_sc < points:
             max_sc = points
         screen.blit(pygame.image.load('apple.png'), (rx - 2, ry - 2))
-        textsurface = myfont.render("Current Score : " + str(points), False, (255, 255, 0))
-        textsurface2 = myfont.render("Max Score : " + str(max_sc), False, (255, 255, 0))
+        textsurface = myfont.render("Current Score : " + str(points), False, (255, 92, 51))
+        textsurface2 = myfont.render("Max Score : " + str(max_sc), False, (255, 255, 255))
         screen.blit(textsurface, (sx - 160, 30))
         screen.blit(textsurface2, (sx - 160, 10))
         nx, ny = sp[0]
@@ -276,18 +257,18 @@ while not done:
             drawbox(nx, ny, color)
             tx, ty = sp[i - 1]
             sp[i] = (tx, ty)
-        drawbox(nx1, ny1, (0, 0, 255))
+        drawbox(nx1, ny1, (0,0 , 255))
         pygame.display.flip()
-        clock.tick(60)
+        # speed of game
+        clock.tick(15)
         x, y = sp[0]
         if x == rx and y == ry:
             sp[size] = (rx + 1, ry + 1)
             rx, ry = randomSnack()
             if size < 5000:
                 size += 1
-            points += 10
-            pygame.mixer.Channel(1).set_volume(0.5)
-            pygame.mixer.Channel(1).play(pygame.mixer.Sound('sound/hit.wav'))
-        # print(sp)
-
+            points += 5
+           # pygame.mixer.Channel(1).set_volume(0.5)
+           # pygame.mixer.Channel(1).play(pygame.mixer.Sound('sound/hit.wav'))
+    # print(sp)
     screen.blit(pygame.image.load('apple.png'), (rx - 2, ry - 2))

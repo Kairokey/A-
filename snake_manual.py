@@ -1,10 +1,9 @@
 import pygame
-import math
 import random
 
 pygame.init()
-sx = 500
-sy = 500
+sx = 800
+sy = 600
 screen = pygame.display.set_mode((sx, sy))
 done = False
 x = 0
@@ -12,7 +11,7 @@ y = 0
 ev = 'r'
 fl = 0
 clock = pygame.time.Clock()
-color = (0, 128, 255)
+color = "red"
 sp = {0: (x, y)}
 size = 1
 points = 0
@@ -93,12 +92,13 @@ def move2(a, b, ev):
 
 
 pygame.font.init()
+pygame.display.set_caption('Snake Project Manual')
 myfont = pygame.font.SysFont('Comic Sans MS', 20)
 
 
 def drawbox(x, y, col=color):
     pygame.draw.rect(screen, col, pygame.Rect(x, y, 20, 20))
-    pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(x, y, 20, 20), 2)
+    pygame.draw.rect(screen, (255,255, 255), pygame.Rect(x, y, 20, 20), 2)
     # pygame.draw.rect(screen, [200, 200, 200], pygame.Rect(x,y, 20), 5)
 
 
@@ -112,9 +112,10 @@ rx, ry = randomSnack()
 
 while not done:
     fl = 0
-    screen.fill((0, 0, 0))
+    #color of background
+    screen.fill((255,255, 255))
     screen.blit(pygame.image.load('apple.png'), (rx - 2, ry - 2))
-    textsurface = myfont.render(str(points), False, (255, 255, 0))
+    textsurface = myfont.render(str(points), False, (255, 51, 51))
     screen.blit(textsurface, (sx - 60, 10))
     # pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(rx, ry, 20, 20))
     for event in pygame.event.get():
@@ -152,7 +153,7 @@ while not done:
         sp[i] = (tx, ty)
     drawbox(nx1, ny1, (0, 0, 255))
     pygame.display.flip()
-    clock.tick(10)
+    clock.tick(7)
     if x == rx and y == ry:
         sp[size] = (rx + 1, ry + 1)
         rx, ry = randomSnack()
